@@ -16,5 +16,5 @@ emptyrm <- function(x){
     return(Temp)
 }
 rawdata <- emptyrm(rawdata)
-##Remove all the empty rows. There raws were created when transforming the original data from .xlsx to .csv. One of the characteristic of
-the empty row is that its 7st column is "NA"
+#Remove all the empty rows. There raws were created when transforming the original data from .xlsx to .csv. One of the characteristic of
+#the empty row is that its 7st column is "NA"
