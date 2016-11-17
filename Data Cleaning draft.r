@@ -1,10 +1,15 @@
 setwd("~/Desktop/MTD PDI Project/Data")
 library(openxlsx)
-rawsheet <- read.xlsx( "Monthly Warranty Report_wDetailed_SN_region_data-en-us.xlsx" , sheet = 2)
-
-rawdata <- read.csv("importante.csv", header = T)
+library(dplyr)
+#rawsheet2 <- read.xlsx( "Monthly Warranty Report_wDetailed_SN_region_data-en-us.xlsx" , sheet = 2)
 
 #THis function will eliminate the NA rows caused by the data set transformation from .xslx to .csv
+refer <- read.xlsx("Model reference.xlsx", startRow = 2)
+table(refer$Item.Platform)
+aaa <- refer[grep("Utility Vehicle", refer$Item.Platform),]
+
+
+rawdata <- read.csv("importante.csv", header = T, na.strings = c("","NA"))
 empty_rm <- function(x){
     rmlist <- 0
     for (i in 1:dim(x)[1]){
@@ -46,7 +51,6 @@ rawdata[,38] <- as.numeric(levels(rawdata[,38]))[rawdata[,38]]
 
 #to character from factor
 rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)] <- as.character(rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)])
-
 #->character -> numeric() : 1,3,4,38
 #difference starts from Failure.Description
 
