@@ -1,9 +1,10 @@
 rf <- function(platform = NULL, dealer = "", year = NULL , state = "", PDI = F){
+    asd <- rawdata
     #platform !!!!!!!!!!!!!!!!!! when it's null asd  = null
     if (is.null(platform) == F) {
         pos1 <- substr(platform, 1,2)
         pos3 <- substr(platform,3,3)
-        asd <- rawdata[rawdata$POS1.2 == substr(platform,1,2) & rawdata$POS5 == substr(platform,3,3),]
+        asd <- asd[asd$POS1.2 == substr(platform,1,2) & asd$POS5 == substr(platform,3,3),]
     }
     
     #dealer!!!!!!!!!!!!!!!!!!!! when dealer is null, asd will lose 240 rows, some dealer name has a <> in it so can't identify
