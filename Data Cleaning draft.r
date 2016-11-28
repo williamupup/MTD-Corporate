@@ -61,18 +61,37 @@ empty_rm <- function(x){
 }
 rawdata <- empty_rm(rawdata)
 
+#Remove 14 state NA value
+rawdata <- rawdata[complete.cases(rawdata$Repair.Dealer.State),]
 
+#Remove Unknown rows
+rawdata <- rawdata[-grep("Unknown", rawdata$Model.Number),]
+
+#Extract unreadable dealer name
+unread <- rawdata[-grep("", rawdata$Repair.Dealer.Name),]
 
 #to numeric from factor
 rawdata[,1] <- as.numeric(levels(rawdata[,1]))[rawdata[,1]]
-rawdata[,3] <- as.numeric(levels(rawdata[,3]))[rawdata[,3]]
-rawdata[,4] <- as.numeric(levels(rawdata[,4]))[rawdata[,4]]
+#rawdata[,3] <- as.numeric(levels(rawdata[,3]))[rawdata[,3]]
+#rawdata[,4] <- as.numeric(levels(rawdata[,4]))[rawdata[,4]]
 rawdata[,38] <- as.numeric(levels(rawdata[,38]))[rawdata[,38]]
 
 #to character from factor
 rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)] <- as.character(rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)])
 #->character -> numeric() : 1,3,4,38
 #difference starts from Failure.Description
+
+#Add values for the column POS1,2, POS5, dealer, state
+for (i in 2:dim(rawdata)[1]){
+    if (is.na(rawdata[i,1]) == T) {
+        rawdata[i,c(3,4,10,11)] <- rawdata[i-1,c(3,4,10,11)]
+    }
+}
+
+###################################################################################
+#PDI DATA SET
+PDI <- rawdata[grep("PDI", rawdata$Failure.Description),]
+
 
 ###################################################################################
 #Draft
@@ -99,3 +118,5 @@ for (i in 2:dim(rawdata)[1]){
     }
 }
 remove(nalist)
+
+
