@@ -1,6 +1,7 @@
 setwd("~/Desktop/MTD PDI Project/Data")
 library(openxlsx)
 library(dplyr)
+library(ggplot2)
 #rawsheet2 <- read.xlsx( "Monthly Warranty Report_wDetailed_SN_region_data-en-us.xlsx" , sheet = 2)
 
 ####################################################################################
@@ -10,6 +11,7 @@ table(refer$Item.Platform)
 
 UV <- refer[grep("Utility Vehicle", refer$Item.Platform),]
 UVuni <- UV[!duplicated(UV$Item.Series),]
+UVpos12 <- refer[grep("^37", refer$Item.Number),]
 #All UVs are 37, but not all 37s are UV
 
 Commercial <- refer[grep("Commercial", refer$Item.Platform),]
@@ -43,11 +45,29 @@ sales <- read.xlsx("IR Ships 2012-2016 by Dealer and Platform.xlsx", sheet = 1)
 dealer <- sales[!duplicated(sales$Customer.Number),c(2,3,5,6)]
 dealer[grep("LES EQUIPEMENTS ADRIEN PHANEUF INC.", dealer$Customer.Name),] #To verify one dealer has multiple numbers
 
+#Order the dealers by Shipped LC
+PDIdealer <- sales[sales$SBU.Division == 73,]
+NPDIdealer <- sales[sales$SBU.Division == 81,]
+PDIorder <- with(PDIdealer, tapply(Shipped.LC, Customer.Name, sum))
+PDIorder <- PDIorder[order(PDIorder, decreasing = T)]
+NPDIorder <- with(NPDIdealer, tapply(Shipped.LC, Customer.Name, sum))
+NPDIorder <- NPDIorder[order(NPDIorder, decreasing = T)]
+remove(PDIdealer, NPDIdealer)
+NPDIorder <- as.data.frame(NPDIorder)
+PDIorder <- as.data.frame(PDIorder)
+
+PDIorder[,2] <- PDIorder[,1]
+names(PDIorder)[2] <- "PDIorder"
+PDIorder[,1] <- rownames(PDIorder)
+names(PDIorder)[1] <- "Dealername"
+PDIorder <- rbind(PDIorder,c("Others", sum(PDIorder$PDIorder)-sum((PDIorder$PDIorder)[1:5])))
+
 
 ###################################################################################
 #For Warranty data set
-#THis function will eliminate the NA rows caused by the data set transformation from .xslx to .csv
 rawdata <- read.csv("importante.csv", header = T, na.strings = c("","NA"))
+
+#THis function will eliminate the NA rows caused by the data set transformation from .xslx to .csv
 empty_rm <- function(x){
     rmlist <- 0
     for (i in 1:dim(x)[1]){
@@ -61,13 +81,25 @@ empty_rm <- function(x){
 }
 rawdata <- empty_rm(rawdata)
 
-#Remove 14 state NA value
-rawdata <- rawdata[complete.cases(rawdata$Repair.Dealer.State),]
+#Add values for the column POS1,2, POS5, dealer, state
+for (i in 2:dim(rawdata)[1]){
+    if (is.na(rawdata[i,1]) == T) {
+        rawdata[i,c(2,3,4,10,11)] <- rawdata[i-1,c(2,3,4,10,11)] #I might want to fill year col for the rf function
+    }
+}
 
-#Remove Unknown rows
+#Remove 14 NA values from State
+rawdata <- rawdata[complete.cases(rawdata$Repair.Dealer.State),]
+# verify <- rawdata[is.na(rawdata$Repair.Dealer.State) == T, ]  #Varify if the state is NA, then the dealer is NA
+
+#Remove Unknown rows from Model.Number, 1025 rows
 rawdata <- rawdata[-grep("Unknown", rawdata$Model.Number),]
 
-#Extract unreadable dealer name
+#Remove "NOMODEL" rows from Model.Number, 712 rows
+rawdata <- rawdata[-grep("NOMODEL", rawdata$Model.Number),]
+
+
+#Extract unreadable dealer name, 7rows
 unread <- rawdata[-grep("", rawdata$Repair.Dealer.Name),]
 
 #to numeric from factor
@@ -75,18 +107,13 @@ rawdata[,1] <- as.numeric(levels(rawdata[,1]))[rawdata[,1]]
 #rawdata[,3] <- as.numeric(levels(rawdata[,3]))[rawdata[,3]]
 #rawdata[,4] <- as.numeric(levels(rawdata[,4]))[rawdata[,4]]
 rawdata[,38] <- as.numeric(levels(rawdata[,38]))[rawdata[,38]]
+rawdata$Repair.Dealer.Name <- as.character(rawdata$Repair.Dealer.Name)
 
 #to character from factor
 rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)] <- as.character(rawdata[,c(2,5,9,10,11,12,23,24,25,26,27,29,30,31,37,39)])
 #->character -> numeric() : 1,3,4,38
 #difference starts from Failure.Description
 
-#Add values for the column POS1,2, POS5, dealer, state
-for (i in 2:dim(rawdata)[1]){
-    if (is.na(rawdata[i,1]) == T) {
-        rawdata[i,c(3,4,10,11)] <- rawdata[i-1,c(3,4,10,11)]
-    }
-}
 
 ###################################################################################
 #PDI DATA SET
@@ -118,5 +145,6 @@ for (i in 2:dim(rawdata)[1]){
     }
 }
 remove(nalist)
+
 
 
